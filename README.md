@@ -14,7 +14,7 @@
 ### 1. Clone & Install
 
 ```bash
-git clone <your-repo>
+git clone https://github.com/CosmicTH0R/Intain-hackathon.git
 cd loan-verification-copilot
 
 # Install backend dependencies
