@@ -1,0 +1,210 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  role         String   // data_operator | reviewer | data_consumer
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  reviewActions    ReviewAction[]
+  auditLogEntries  AuditLogEntry[]
+  verifiedLoans    VerifiedLoanRecord[]
+}
+
+model ImportBatch {
+  id            String   @id @default(uuid())
+  fileName      String
+  fileType      String   // loan_tape | servicer_update | document_manifest
+  uploadedBy    String
+  uploadedAt    DateTime @default(now())
+  totalRows     Int
+  importedRows  Int
+  failedRows    Int
+  status        String   @default("completed")
+
+  loanRecords   LoanRecord[]
+  failedRowLogs FailedRowLog[]
+}
+
+model FailedRowLog {
+  id          String      @id @default(uuid())
+  batchId     String
+  rowNumber   Int
+  rawContent  String
+  reason      String
+  createdAt   DateTime    @default(now())
+
+  batch       ImportBatch @relation(fields: [batchId], references: [id])
+}
+
+model LoanRecord {
+  id                 String    @id @default(uuid())
+  loanId             String
+  borrowerId         String
+  loanType           String?
+  originationDate    String?
+  maturityDate       String?
+  originalPrincipal  Float?
+  currentBalance     Float?
+  interestRate       Float?
+  termMonths         Int?
+  borrowerState      String?
+  loanPurpose        String?
+  creditGrade        String?
+  employmentLength   String?
+  incomeBand         String?
+  paymentStatus      String?
+  daysPastDue        Int?
+  servicerName       String?
+  lastPaymentDate    String?
+  lastUpdatedAt      String?
+  documentStatus     String?
+  sourceSystem       String?
+  sourceFileId       String
+  importBatchId      String
+  rawRowJson         String
+  createdAt          DateTime  @default(now())
+
+  batch              ImportBatch        @relation(fields: [importBatchId], references: [id])
+  exceptions         Exception[]
+  verifiedRecord     VerifiedLoanRecord?
+  auditEntries       AuditLogEntry[]
+
+  @@index([loanId])
+  @@index([borrowerId])
+  @@index([importBatchId])
+}
+
+model ServicerUpdate {
+  id                String   @id @default(uuid())
+  loanId            String
+  sourceFileId      String
+  importBatchId     String
+  rawRowJson        String
+  currentBalance    Float?
+  paymentStatus     String?
+  daysPastDue       Int?
+  lastPaymentDate   String?
+  lastUpdatedAt     String?
+  documentStatus    String?
+  createdAt         DateTime @default(now())
+
+  @@index([loanId])
+}
+
+model DocumentManifest {
+  id             String   @id @default(uuid())
+  loanId         String
+  documentStatus String
+  sourceFileId   String
+  importBatchId  String
+  createdAt      DateTime @default(now())
+
+  @@index([loanId])
+}
+
+model ValidationRule {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  type        String
+  severity    String   // low | medium | high | critical
+  configJson  String   @default("{}")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  exceptions  Exception[]
+}
+
+model Exception {
+  id           String   @id @default(uuid())
+  loanId       String
+  loanRecordId String
+  ruleId       String
+  severity     String
+  status       String   @default("open") // open | approved | rejected | corrected
+  detectedAt   DateTime @default(now())
+  detailsJson  String
+
+  loanRecord       LoanRecord      @relation(fields: [loanRecordId], references: [id])
+  rule             ValidationRule  @relation(fields: [ruleId], references: [id])
+  reviewActions    ReviewAction[]
+  aiRecommendations AIRecommendation[]
+
+  @@index([loanId])
+  @@index([status])
+  @@index([severity])
+}
+
+model ReviewAction {
+  id               String   @id @default(uuid())
+  exceptionId      String
+  reviewerId       String
+  action           String   // approve | reject | request_correction | comment | edit_field
+  comment          String?
+  fieldChangesJson String?
+  timestamp        DateTime @default(now())
+
+  exception  Exception @relation(fields: [exceptionId], references: [id])
+  reviewer   User      @relation(fields: [reviewerId], references: [id])
+}
+
+model AIRecommendation {
+  id              String   @id @default(uuid())
+  exceptionId     String?
+  loanId          String?
+  endpoint        String
+  prompt          String
+  model           String
+  responseText    String
+  suggestedAction String?
+  timestamp       DateTime @default(now())
+  status          String   @default("pending") // pending | accepted | rejected | edited
+
+  exception       Exception? @relation(fields: [exceptionId], references: [id])
+}
+
+model VerifiedLoanRecord {
+  id                     String   @id @default(uuid())
+  loanId                 String   @unique
+  loanRecordId           String   @unique
+  canonicalDataJson      String
+  sourceFileReference    String
+  validationResult       String
+  reviewerDecision       String
+  aiRecommendationRef    String?
+  verificationTimestamp  DateTime @default(now())
+  verifiedBy             String
+  recordHash             String
+
+  loanRecord  LoanRecord @relation(fields: [loanRecordId], references: [id])
+  verifiedUser User      @relation(fields: [verifiedBy], references: [id])
+}
+
+model AuditLogEntry {
+  id           String   @id @default(uuid())
+  eventType    String
+  entityType   String
+  entityId     String
+  actor        String
+  timestamp    DateTime @default(now())
+  detailsJson  String
+
+  loanRecord   LoanRecord? @relation(fields: [entityId], references: [id])
+  user         User?       @relation(fields: [actor], references: [id])
+
+  @@index([entityId])
+  @@index([eventType])
+}

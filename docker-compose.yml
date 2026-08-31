@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=file:./dev.db
+      - JWT_SECRET=docker-compose-secret-change-me
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-sk-ant-your-key}
+      - PORT=3001
+      - FRONTEND_URL=http://localhost:5173
+    volumes:
+      - ./backend/prisma:/app/prisma
+    command: sh -c "npm run db:push && npm run db:seed && npm run dev"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - backend
