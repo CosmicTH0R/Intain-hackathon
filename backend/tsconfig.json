@@ -17,6 +17,6 @@
       "@prisma/*": ["./node_modules/.prisma/*"]
     }
   },
-  "include": ["src/**/*", "prisma/**/*"],
-  "exclude": ["node_modules", "dist", "__tests__"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "__tests__", "prisma/**/*"]
 }
