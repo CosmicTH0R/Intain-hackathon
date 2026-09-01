@@ -64,7 +64,7 @@ export default function AIPanel({ exceptionId, loanId, onDecision }: AIPanelProp
     const payload: Record<string, string> = { status };
     if (status === 'edited') payload.editedResponse = editedText;
 
-    await api.post(`/ai/recommendations/${rec.recommendationId || rec.id}/decision`, payload);
+    await api.post(`/ai/recommendations/${(rec as any).recommendationId || rec.id}/decision`, payload);
     setResults((prev) => ({ ...prev, [endpoint]: { ...rec, status } }));
     setEditMode(null);
     onDecision?.(rec.id, status);

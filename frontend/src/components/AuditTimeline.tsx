@@ -98,18 +98,18 @@ export default function AuditTimeline({ loanId }: AuditTimelineProps) {
                   </div>
                   <div className="space-y-1">
                     <DetailItem label="Actor" value={entry.actor} />
-                    {entry.details.loanId && <DetailItem label="Loan ID" value={entry.details.loanId as string} />}
-                    {entry.details.message && <DetailItem label="Message" value={entry.details.message as string} />}
-                    {entry.details.action && <DetailItem label="Action" value={entry.details.action as string} />}
-                    {entry.details.comment && <DetailItem label="Comment" value={entry.details.comment as string} />}
-                    {entry.details.ruleName && <DetailItem label="Rule" value={entry.details.ruleName as string} />}
-                    {entry.details.severity && <DetailItem label="Severity" value={entry.details.severity as string} />}
-                    {entry.details.hash && (
+                    {!!entry.details.loanId && <DetailItem label="Loan ID" value={entry.details.loanId} />}
+                    {!!entry.details.message && <DetailItem label="Message" value={entry.details.message} />}
+                    {!!entry.details.action && <DetailItem label="Action" value={entry.details.action} />}
+                    {!!entry.details.comment && <DetailItem label="Comment" value={entry.details.comment} />}
+                    {!!entry.details.ruleName && <DetailItem label="Rule" value={entry.details.ruleName} />}
+                    {!!entry.details.severity && <DetailItem label="Severity" value={entry.details.severity} />}
+                    {!!entry.details.hash && (
                       <div className="text-xs mt-1.5 bg-surface rounded p-1.5 font-mono text-emerald-300 break-all">
-                        SHA-256: {entry.details.hash as string}
+                        SHA-256: {String(entry.details.hash)}
                       </div>
                     )}
-                    {entry.details.before && (
+                    {!!entry.details.before && (
                       <div className="text-xs mt-1">
                         <span className="text-red-400">Before: </span>
                         <span className="font-mono text-slate-400">{JSON.stringify(entry.details.before)}</span>
